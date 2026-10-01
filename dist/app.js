@@ -19,7 +19,7 @@ const pricingConfig = Object.freeze({
       price: 7980,
       type: "limited",
       allowed: ["guinea"],
-      description: "已含棚拍場租（多隻毛孩加購、場租時數另計算）",
+      description: "已含基本棚拍場租（多隻毛孩加購、場租時數另計算）",
       packageItems: ["5 張精修照片", "40 張調色毛片", "3 張客製聖誕插畫電子檔", "3 款(6入) 客製專屬聖誕吊飾", "1 張 天天好萌水晶貼紙"],
       packageNote: "✧ 3 款天天好萌客製聖誕角色，每款製作 2 個，共 6 個聖誕吊飾！",
       packageSummary: "共 45 張攝影作品＋3 張客製聖誕插畫電子檔＋7 件實體收藏"
