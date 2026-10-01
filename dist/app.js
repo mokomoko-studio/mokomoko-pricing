@@ -331,6 +331,7 @@ function render() {
 }
 
 document.addEventListener("click", (event) => {
+  if (editMode && event.target.closest('[contenteditable="true"]')) return;
   const planCard = event.target.closest("[data-plan]"); if (planCard) return selectPlan(planCard.dataset.plan);
   const speciesCard = event.target.closest("[data-species]"); if (speciesCard) return selectSpecies(speciesCard.dataset.species);
   const countButton = event.target.closest("[data-count-delta]"); if (countButton) return changePetCount(Number(countButton.dataset.countDelta));

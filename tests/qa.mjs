@@ -129,7 +129,11 @@ for (const width of widths) {
   await page.goto(base + "?embed=1&edit=1", { waitUntil: "networkidle" });
   assert.equal(await page.locator("#editToolbar").isVisible(), true);
   const target = page.locator('[data-plan="christmas"] .package-intro');
-  await target.fill("預覽文字修改測試");
+  await target.click();
+  assert.equal(await target.evaluate((element) => document.activeElement === element), true);
+  await page.keyboard.press("Meta+A");
+  await page.keyboard.type("預覽文字修改測試");
+  assert.equal(await target.evaluate((element) => document.activeElement === element), true);
   await page.reload({ waitUntil: "networkidle" });
   assert.equal(await page.locator('[data-plan="christmas"] .package-intro').textContent(), "預覽文字修改測試");
   assert.equal(await page.locator('[data-plan="christmas"] .package-intro').getAttribute("contenteditable"), "true");
