@@ -4,29 +4,29 @@
 const pricingConfig = Object.freeze({
   plans: {
     christmas: {
-      name: "其他特寵／貓｜聖誕寫真收藏",
+      name: "✧ 特寵／貓｜聖誕寫真收藏",
       price: 6980,
       type: "limited",
       allowed: ["cat", "exotic"],
-      description: "已含棚拍場租（多隻毛孩加購、場租時數依拍攝對象另計算）",
-      introduction: "留下一整套今年的聖誕寫真，把這個冬天可愛的樣子完整留下來。",
-      packageItems: ["10 張精修寫真電子檔", "40 張日系調色照片電子檔", "活動期間再贈 10 張日系調色照片電子檔"],
-      packageSummary: "共 60 張數位影像（無挑片流程）"
+      description: "已含基本棚拍場租（多隻毛孩加購、場租時數依拍攝對象另計算）",
+      introduction: "",
+      packageItems: ["10 張精修照片電子檔", "40 張日系調色照片電子檔", "再贈 10 張日系調色照片電子檔"],
+      packageSummary: "共 60 張攝影作品"
     },
     guinea: {
-      name: "天竺鼠｜聯名角色收藏",
-      label: "天天好萌聯名",
+      name: "✧ 天竺鼠｜聖誕聯名收藏組",
+      label: "天天好萌插畫家聯名",
       price: 7980,
       type: "limited",
       allowed: ["guinea"],
       description: "已含棚拍場租（多隻毛孩加購、場租時數另計算）",
-      packageItems: ["5 張精修寫真電子檔", "40 張日系調色照片電子檔", "3 款（6入）客製專屬聖誕吊飾", "3 張客製聖誕插畫電子檔", "1 張 天天好萌水晶貼紙"],
-      packageNote: "3 款專屬聖誕角色，每款製作 2 個，共 6 個聖誕角色吊飾。\n\n一套完整收藏，可以自己收藏，另一份也可以留給同樣愛牠的家人。",
-      packageSummary: "共 45 張攝影作品＋3 張客製聖誕插畫電子檔＋7 件實體收藏（無挑片流程）"
+      packageItems: ["5 張精修寫真電子檔", "40 張日系調色照片電子檔", "3 張客製聖誕插畫電子檔", "3 款(6入) 客製專屬聖誕吊飾", "1 張 天天好萌水晶貼紙"],
+      packageNote: "✧ 3 款天天好萌客製聖誕角色，每款製作 2 個，共 6 個聖誕吊飾！",
+      packageSummary: "共 45 張攝影作品＋3 張客製聖誕插畫電子檔＋7 件實體收藏"
     },
-    easy: { name: "輕鬆體驗", price: 4880, type: "regular", allowed: ["dog", "cat", "exotic"], description: "包含精修照片 8 張" },
-    cp: { name: "CP首選", price: 5980, type: "regular", allowed: ["dog", "cat", "exotic"], description: "包含精修照片 10 張＋調色毛片 40 張" },
-    luxury: { name: "豪華套餐", price: 8080, type: "regular", allowed: ["dog", "cat", "exotic"], description: "包含精修照片 15 張、調色毛片 40 張、寵生四格照 12 條、30×30cm 無框畫 1 幅" }
+    easy: { name: "✧ 輕鬆體驗", price: 4880, type: "regular", allowed: ["dog", "cat", "exotic"], description: "包含精修照片 8 張" },
+    cp: { name: "✧ CP首選", price: 5980, type: "regular", allowed: ["dog", "cat", "exotic"], description: "包含精修照片 10 張＋調色毛片 40 張" },
+    luxury: { name: "✧ 豪華套餐", price: 8080, type: "regular", allowed: ["dog", "cat", "exotic"], description: "包含精修照片 15 張＋調色毛片 40 張＋寵生四格照 12 條＋30×30cm 無框畫 1 幅" }
   },
   species: {
     dog: { label: "狗狗", max: 3 },
@@ -100,9 +100,10 @@ function setConfigContent(path, value) {
 function loadContentEdits() {
   try {
     const stored = JSON.parse(localStorage.getItem(CONTENT_STORAGE_KEY) || "{}");
+    const pageEdits = stored.page && typeof stored.page === "object" ? stored.page : {};
     contentEdits = {
       config: stored.config && typeof stored.config === "object" ? stored.config : {},
-      page: stored.page && typeof stored.page === "object" ? stored.page : {}
+      page: Object.fromEntries(Object.entries(pageEdits).filter(([key]) => !isDynamicPageEditKey(key)))
     };
   } catch {
     contentEdits = { config: {}, page: {} };
@@ -110,6 +111,13 @@ function loadContentEdits() {
   Object.entries(contentEdits.config).forEach(([path, value]) => {
     if (typeof value === "string") setConfigContent(path, value);
   });
+}
+
+function isDynamicPageEditKey(key) {
+  return [
+    "#animalCounters", "#productCounters", "#speciesChoices", "#environmentChoices", "#environmentNote",
+    "#breakdown", "#completionNotice", "#totalAmount", "#planValidation", "#speciesValidation", "#environmentValidation"
+  ].some((id) => key.includes(id));
 }
 
 function saveContentEdits() {
@@ -125,8 +133,7 @@ function refreshEditableText() {
   const selector = [
     ".brand-name", "h1", "h2", ".subtitle", ".group-heading", ".helper", ".rule-list li",
     ".choice-title strong", ".collab-tag", ".choice-detail", ".package-intro", ".package-heading", ".package-list > span",
-    ".package-note", ".package-summary", ".environment-note", ".environment-list strong", ".environment-list p",
-    ".counter-copy strong", ".counter-copy p", ".detail-plan-name", ".detail-summary", ".summary-note", ".total-label", ".completion-notice"
+    ".package-note", ".package-summary", ".detail-plan-name", ".detail-summary", ".summary-note", ".total-label"
   ].join(",");
   document.querySelectorAll(selector).forEach((element) => {
     const key = editableKey(element);
@@ -280,7 +287,7 @@ function renderEnvironment() {
   if (plan.type === "limited") {
     state.environment = "indoor";
     holder.innerHTML = '<div class="choice-card is-selected"><strong>室內棚拍</strong><p>期間限定方案已包含基本棚租，僅依方案規則計算特殊數量加價。</p></div>';
-    note.textContent = "聖誕寫真收藏與天竺鼠聯名角色收藏皆已包含 1 小時基本棚租；若因毛孩數量需要增加拍攝時數，將依一般棚拍費 NT$1,000／小時加收。貓咪 1–2 隻皆以 2 小時計算；特寵 3 隻以 1.5 小時計算；特寵 4 隻以 2 小時計算。";
+    note.textContent = "聖誕寫真收藏與天竺鼠聯名聖誕收藏組皆已包含 1 小時基本棚租；若因毛孩數量需要增加拍攝時數，將依一般棚拍費 NT$1,000／小時加收。貓咪 1–2 隻皆以 2 小時計算；特寵 3 隻以 1.5 小時計算；特寵 4 隻以 2 小時計算。";
     return;
   }
   if (state.species === "dog") {

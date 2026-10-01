@@ -67,6 +67,25 @@ for (const width of widths) {
 }
 
 {
+  const { page, errors } = await open(390);
+  const assertCounter = async (species, label, max) => {
+    await page.locator(`[data-species="${species}"]`).click();
+    assert.match(await page.locator("#animalCounters .counter-title strong").innerText(), new RegExp(`^${label}數量`));
+    assert.equal(await page.locator("#animalCounters .counter-copy p").textContent(), `最少 1 隻，最多 ${max} 隻`);
+  };
+  await page.locator('[data-plan="easy"]').click();
+  await assertCounter("dog", "狗狗", 3);
+  await assertCounter("cat", "貓咪", 2);
+  await assertCounter("exotic", "特寵", 4);
+  await assertCounter("dog", "狗狗", 3);
+  await page.locator('[data-plan="guinea"]').click();
+  assert.match(await page.locator("#animalCounters .counter-title strong").innerText(), /^天竺鼠數量/);
+  assert.equal(await page.locator("#animalCounters .counter-copy p").textContent(), "最少 1 隻，最多 3 隻");
+  assert.deepEqual(errors, []);
+  await page.close();
+}
+
+{
   const { page, errors } = await open(375);
   await page.locator('[data-plan="christmas"]').click();
   await page.locator('[data-species="cat"]').click();
@@ -85,7 +104,7 @@ for (const width of widths) {
   await page.locator('[data-count-delta="1"]').click();
   assert.equal(await page.locator("#totalAmount").textContent(), "NT$9,480");
   assert.equal(await page.locator('[data-count-delta="1"]').isDisabled(), true);
-  assert.match(await page.locator('[data-plan="guinea"]').innerText(), /天天好萌聯名/);
+  assert.match(await page.locator('[data-plan="guinea"]').innerText(), /天天好萌插畫家聯名/);
   assert.match(await page.locator('[data-plan="guinea"]').innerText(), /7 件實體收藏/);
   assert.deepEqual(errors, []);
   await page.close();
@@ -103,17 +122,64 @@ for (const width of widths) {
 
 {
   const { page } = await open(375);
-  assert.equal(await page.locator(".limited-heading").textContent(), "室內棚拍活動限定方案｜10/31 前預約");
+  assert.equal(await page.locator(".limited-heading").textContent(), "11/1-12/10 聖誕室內棚拍（10/31 預約截止）");
   assert.equal(await page.locator(".rule-list li").count(), 7);
+  assert.equal(await page.locator(".rule-list li").nth(1).textContent(), "聖誕寫真收藏與天竺鼠聯名聖誕收藏組皆已包含 1 小時基本棚租。");
+  assert.equal(await page.locator(".rule-list li").nth(4).textContent(), "特寵 3 隻以 1.5 小時計算；4 隻以 2 小時計算。");
+  assert.equal(await page.locator(".rule-list li").nth(5).textContent(), "常態方案仍依一般棚拍費 NT$1,000／小時計算。");
   const christmasCard = await page.locator('[data-plan="christmas"]').innerText();
-  assert.match(christmasCard, /活動期間再贈 10 張日系調色照片電子檔/);
-  assert.match(christmasCard, /共 60 張數位影像（無挑片流程）/);
+  assert.match(christmasCard, /✧ 特寵／貓｜聖誕寫真收藏/);
+  assert.match(christmasCard, /10 張精修照片電子檔/);
+  assert.match(christmasCard, /再贈 10 張日系調色照片電子檔/);
+  assert.match(christmasCard, /共 60 張攝影作品/);
   assert.equal(christmasCard.includes("共 50 張數位影像"), false);
+  assert.equal(await page.locator('[data-plan="christmas"] .package-intro').count(), 0);
+  const guineaCard = await page.locator('[data-plan="guinea"]').innerText();
+  assert.match(guineaCard, /✧ 天竺鼠｜聖誕聯名收藏組/);
+  assert.match(guineaCard, /天天好萌插畫家聯名/);
+  assert.match(guineaCard, /3 張客製聖誕插畫電子檔/);
+  assert.match(guineaCard, /3 款\(6入\) 客製專屬聖誕吊飾/);
+  assert.match(guineaCard, /✧ 3 款天天好萌客製聖誕角色，每款製作 2 個，共 6 個聖誕吊飾！/);
+  assert.match(guineaCard, /共 45 張攝影作品＋3 張客製聖誕插畫電子檔＋7 件實體收藏/);
+  assert.match(await page.locator('[data-plan="easy"] .choice-title strong').textContent(), /^✧ 輕鬆體驗$/);
+  assert.match(await page.locator('[data-plan="cp"] .choice-title strong').textContent(), /^✧ CP首選$/);
+  assert.match(await page.locator('[data-plan="luxury"] .choice-detail').textContent(), /精修照片 15 張＋調色毛片 40 張＋寵生四格照/);
   await page.locator('[data-plan="christmas"]').click();
   await page.locator('[data-species="cat"]').click();
   const breakdown = await page.locator("#breakdown").innerText();
-  assert.match(breakdown, /共 60 張數位影像（無挑片流程）/);
+  assert.match(breakdown, /共 60 張攝影作品/);
   assert.equal(breakdown.includes("共 50 張數位影像"), false);
+  await page.close();
+}
+
+{
+  const page = await browser.newPage({ viewport: { width: 390, height: 900 } });
+  await page.goto(base + "?embed=1&edit=1", { waitUntil: "networkidle" });
+  await page.evaluate(() => {
+    localStorage.setItem("mokomoko-pricing-content-v1", JSON.stringify({
+      config: {},
+      page: {
+        "page.#animalCounters/div:1/div:0/div:0/div:0/strong:0": "特寵",
+        "page.#environmentNote/p:0": "錯誤的動態提示"
+      }
+    }));
+  });
+  await page.reload({ waitUntil: "networkidle" });
+  await page.locator('[data-plan="easy"] .radio-dot').click();
+  const sequence = [
+    ["dog", "狗狗", 3],
+    ["cat", "貓咪", 2],
+    ["exotic", "特寵", 4],
+    ["dog", "狗狗", 3]
+  ];
+  for (const [species, label, max] of sequence) {
+    await page.locator(`[data-species="${species}"]`).click();
+    assert.match(await page.locator("#animalCounters .counter-title strong").innerText(), new RegExp(`^${label}數量`));
+    assert.equal(await page.locator("#animalCounters .counter-copy p").textContent(), `最少 1 隻，最多 ${max} 隻`);
+  }
+  assert.equal(await page.locator("#animalCounters .counter-title strong").getAttribute("contenteditable"), null);
+  assert.equal(await page.locator("#animalCounters .counter-copy p").getAttribute("contenteditable"), null);
+  assert.equal(await page.locator("#environmentNote").getAttribute("contenteditable"), null);
   await page.close();
 }
 
@@ -156,9 +222,8 @@ for (const width of widths) {
   assert.equal(await page.locator("#totalAmount").textContent(), "NT$7,980");
 
   const edited = {
-    name: "其他特寵／貓｜聖誕收藏測試版",
+    name: "✧ 特寵／貓｜聖誕收藏測試版",
     description: "測試用方案說明，價格與規則保持不變。",
-    introduction: "測試用完整方案介紹。",
     firstItem: "測試用精修寫真電子檔",
     bonus: "活動測試加贈日系調色照片電子檔",
     summary: "測試用共 60 張數位影像摘要"
@@ -174,7 +239,6 @@ for (const width of widths) {
 
   await editText('[data-plan="christmas"] .choice-title strong', edited.name);
   await editText('[data-plan="christmas"] .choice-detail', edited.description);
-  await editText('[data-plan="christmas"] .package-intro', edited.introduction);
   await editText('[data-config-path="plans.christmas.packageItems.0"]', edited.firstItem);
   await editText('[data-config-path="plans.christmas.packageItems.2"]', edited.bonus);
   await editText('[data-plan="christmas"] .package-summary', edited.summary);
@@ -193,16 +257,15 @@ for (const width of widths) {
   await page.reload({ waitUntil: "networkidle" });
   assert.equal(await page.locator('[data-plan="christmas"] .choice-title strong').textContent(), edited.name);
   assert.equal(await page.locator('[data-plan="christmas"] .choice-detail').textContent(), edited.description);
-  assert.equal(await page.locator('[data-plan="christmas"] .package-intro').textContent(), edited.introduction);
   assert.equal(await page.locator('[data-config-path="plans.christmas.packageItems.0"]').textContent(), edited.firstItem);
   assert.equal(await page.locator('[data-config-path="plans.christmas.packageItems.2"]').textContent(), edited.bonus);
   assert.equal(await page.locator('[data-plan="christmas"] .package-summary').textContent(), edited.summary);
-  assert.equal(await page.locator('[data-plan="christmas"] .package-intro').getAttribute("contenteditable"), "true");
+  assert.equal(await page.locator('[data-plan="christmas"] .package-intro').count(), 0);
 
   await page.goto(base + "?embed=1", { waitUntil: "networkidle" });
   assert.equal(await page.locator("#editToolbar").isVisible(), false);
   assert.equal(await page.locator('[data-plan="christmas"] .choice-title strong').textContent(), edited.name);
-  assert.equal(await page.locator('[data-plan="christmas"] .package-intro').getAttribute("contenteditable"), null);
+  assert.equal(await page.locator('[data-plan="christmas"] .package-intro').count(), 0);
   await page.locator('[data-plan="christmas"]').click();
   await page.locator('[data-species="cat"]').click();
   assert.equal(await page.locator("#breakdown .detail-plan-name").textContent(), edited.name);
@@ -214,12 +277,12 @@ for (const width of widths) {
     page.waitForNavigation({ waitUntil: "networkidle" }),
     page.locator("#resetEdits").click()
   ]);
-  assert.equal(await page.locator('[data-plan="christmas"] .choice-title strong').textContent(), "其他特寵／貓｜聖誕寫真收藏");
-  assert.equal(await page.locator('[data-plan="christmas"] .choice-detail').textContent(), "已含棚拍場租（多隻毛孩加購、場租時數依拍攝對象另計算）");
-  assert.equal(await page.locator('[data-plan="christmas"] .package-intro').textContent(), "留下一整套今年的聖誕寫真，把這個冬天可愛的樣子完整留下來。");
-  assert.equal(await page.locator('[data-config-path="plans.christmas.packageItems.0"]').textContent(), "10 張精修寫真電子檔");
-  assert.equal(await page.locator('[data-config-path="plans.christmas.packageItems.2"]').textContent(), "活動期間再贈 10 張日系調色照片電子檔");
-  assert.equal(await page.locator('[data-plan="christmas"] .package-summary').textContent(), "共 60 張數位影像（無挑片流程）");
+  assert.equal(await page.locator('[data-plan="christmas"] .choice-title strong').textContent(), "✧ 特寵／貓｜聖誕寫真收藏");
+  assert.equal(await page.locator('[data-plan="christmas"] .choice-detail').textContent(), "已含基本棚拍場租（多隻毛孩加購、場租時數依拍攝對象另計算）");
+  assert.equal(await page.locator('[data-plan="christmas"] .package-intro').count(), 0);
+  assert.equal(await page.locator('[data-config-path="plans.christmas.packageItems.0"]').textContent(), "10 張精修照片電子檔");
+  assert.equal(await page.locator('[data-config-path="plans.christmas.packageItems.2"]').textContent(), "再贈 10 張日系調色照片電子檔");
+  assert.equal(await page.locator('[data-plan="christmas"] .package-summary').textContent(), "共 60 張攝影作品");
   assert.equal(await page.evaluate(() => localStorage.getItem("mokomoko-pricing-content-v1")), null);
   await page.close();
 }
@@ -228,7 +291,7 @@ for (const width of widths) {
   const page = await browser.newPage({ viewport: { width: 390, height: 900 } });
   await page.goto(base + "?embed=1", { waitUntil: "networkidle" });
   assert.equal(await page.locator("#editToolbar").isVisible(), false);
-  assert.equal(await page.locator('[data-plan="christmas"] .package-intro').getAttribute("contenteditable"), null);
+  assert.equal(await page.locator('[data-plan="christmas"] .package-intro').count(), 0);
   await page.close();
 }
 
