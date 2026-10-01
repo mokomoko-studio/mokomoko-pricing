@@ -49,8 +49,9 @@ const { plans, species: speciesInfo, products } = pricingConfig;
 const money = (amount) => "NT$" + amount.toLocaleString("zh-TW");
 const currentPlan = () => state.plan ? plans[state.plan] : null;
 const editMode = new URLSearchParams(location.search).get("edit") === "1";
-const EDIT_STORAGE_KEY = "mokomoko-pricing-text-edits-v1";
-let textEdits = {};
+const CONTENT_STORAGE_KEY = "mokomoko-pricing-content-v1";
+const LEGACY_STORAGE_KEY = "mokomoko-pricing-text-edits-v1";
+let contentEdits = { config: {}, page: {} };
 
 function initializePageMode() {
   const params = new URLSearchParams(location.search);
@@ -59,6 +60,7 @@ function initializePageMode() {
 }
 
 function editableKey(element) {
+  if (element.dataset.configPath) return `config.${element.dataset.configPath}`;
   if (element.dataset.editKey) return element.dataset.editKey;
   const plan = element.closest("[data-plan]");
   if (plan) {
@@ -80,9 +82,38 @@ function editableKey(element) {
   return `page.${parts.join("/")}`;
 }
 
-function loadTextEdits() {
-  try { textEdits = JSON.parse(localStorage.getItem(EDIT_STORAGE_KEY) || "{}"); }
-  catch { textEdits = {}; }
+function isEditableConfigPath(path) {
+  return /^plans\.[a-z]+\.(name|label|description|introduction|packageNote|packageSummary|packageItems\.\d+)$/.test(path);
+}
+
+function setConfigContent(path, value) {
+  if (!isEditableConfigPath(path)) return;
+  const parts = path.split(".");
+  let target = pricingConfig;
+  for (let index = 0; index < parts.length - 1; index += 1) {
+    if (target[parts[index]] == null) return;
+    target = target[parts[index]];
+  }
+  target[parts.at(-1)] = value;
+}
+
+function loadContentEdits() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(CONTENT_STORAGE_KEY) || "{}");
+    contentEdits = {
+      config: stored.config && typeof stored.config === "object" ? stored.config : {},
+      page: stored.page && typeof stored.page === "object" ? stored.page : {}
+    };
+  } catch {
+    contentEdits = { config: {}, page: {} };
+  }
+  Object.entries(contentEdits.config).forEach(([path, value]) => {
+    if (typeof value === "string") setConfigContent(path, value);
+  });
+}
+
+function saveContentEdits() {
+  localStorage.setItem(CONTENT_STORAGE_KEY, JSON.stringify(contentEdits));
 }
 
 function updateEditStatus(message = "變更已儲存在這個瀏覽器。") {
@@ -91,25 +122,25 @@ function updateEditStatus(message = "變更已儲存在這個瀏覽器。") {
 }
 
 function refreshEditableText() {
-  if (!editMode) return;
   const selector = [
     ".brand-name", "h1", "h2", ".subtitle", ".group-heading", ".helper", ".rule-list li",
-    ".choice-title strong", ".choice-detail", ".package-intro", ".package-heading", ".package-list > span",
+    ".choice-title strong", ".collab-tag", ".choice-detail", ".package-intro", ".package-heading", ".package-list > span",
     ".package-note", ".package-summary", ".environment-note", ".environment-list strong", ".environment-list p",
-    ".counter-copy strong", ".counter-copy p", ".detail-summary", ".summary-note", ".total-label", ".completion-notice"
+    ".counter-copy strong", ".counter-copy p", ".detail-plan-name", ".detail-summary", ".summary-note", ".total-label", ".completion-notice"
   ].join(",");
   document.querySelectorAll(selector).forEach((element) => {
     const key = editableKey(element);
     element.dataset.editKey = key;
-    if (Object.prototype.hasOwnProperty.call(textEdits, key)) element.textContent = textEdits[key];
-    element.contentEditable = "true";
-    element.spellcheck = false;
+    if (!element.dataset.configPath && Object.prototype.hasOwnProperty.call(contentEdits.page, key)) element.textContent = contentEdits.page[key];
+    if (editMode) {
+      element.contentEditable = "true";
+      element.spellcheck = false;
+    }
   });
 }
 
 function initializeEditMode() {
   if (!editMode) return;
-  loadTextEdits();
   document.body.classList.add("edit-mode");
   document.getElementById("editToolbar").hidden = false;
   const exitUrl = new URL(location.href);
@@ -118,15 +149,21 @@ function initializeEditMode() {
   document.addEventListener("input", (event) => {
     const element = event.target.closest("[data-edit-key]");
     if (!element) return;
-    textEdits[element.dataset.editKey] = element.innerText.trim();
-    localStorage.setItem(EDIT_STORAGE_KEY, JSON.stringify(textEdits));
+    const value = element.innerText.trim();
+    if (element.dataset.configPath) {
+      setConfigContent(element.dataset.configPath, value);
+      contentEdits.config[element.dataset.configPath] = value;
+    } else {
+      contentEdits.page[element.dataset.editKey] = value;
+    }
+    saveContentEdits();
     document.querySelectorAll("[data-edit-key]").forEach((other) => {
-      if (other !== element && other.dataset.editKey === element.dataset.editKey) other.textContent = textEdits[element.dataset.editKey];
+      if (other !== element && other.dataset.editKey === element.dataset.editKey) other.textContent = value;
     });
     updateEditStatus();
   });
   document.getElementById("exportEdits").addEventListener("click", () => {
-    const blob = new Blob([JSON.stringify(textEdits, null, 2)], { type: "application/json" });
+    const blob = new Blob([JSON.stringify(contentEdits, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
@@ -136,7 +173,8 @@ function initializeEditMode() {
     updateEditStatus("文字設定已下載。");
   });
   document.getElementById("resetEdits").addEventListener("click", () => {
-    localStorage.removeItem(EDIT_STORAGE_KEY);
+    localStorage.removeItem(CONTENT_STORAGE_KEY);
+    localStorage.removeItem(LEGACY_STORAGE_KEY);
     location.reload();
   });
 }
@@ -145,13 +183,13 @@ function renderStaticChoices() {
   const planCard = ([key, plan]) => `
     <button type="button" class="choice-card plan-card" data-plan="${key}" role="radio" aria-checked="false">
       <span class="choice-inner"><span class="radio-dot" aria-hidden="true"></span><span class="choice-content">
-        <span class="choice-title"><strong>${plan.name}</strong>${plan.label ? `<span class="collab-tag">${plan.label}</span>` : ""}${plan.type === "limited" ? '<span class="limited-tag">期間限定</span>' : ""}</span>
+        <span class="choice-title"><strong data-config-path="plans.${key}.name">${plan.name}</strong>${plan.label ? `<span class="collab-tag" data-config-path="plans.${key}.label">${plan.label}</span>` : ""}${plan.type === "limited" ? '<span class="limited-tag">期間限定</span>' : ""}</span>
         <span class="choice-price">${money(plan.price)}</span>
-        <span class="choice-detail">${plan.description}</span>
-        ${plan.introduction ? `<span class="package-intro">${plan.introduction}</span>` : ""}
-        ${plan.packageItems ? `<span class="package-block"><strong class="package-heading">套裝內容</strong><span class="package-list">${plan.packageItems.map((item) => `<span>${item}</span>`).join("")}</span></span>` : ""}
-        ${plan.packageNote ? `<span class="package-note">${plan.packageNote.replace(/\n/g, "<br>")}</span>` : ""}
-        ${plan.packageSummary ? `<span class="package-summary">${plan.packageSummary}</span>` : ""}
+        <span class="choice-detail" data-config-path="plans.${key}.description">${plan.description}</span>
+        ${plan.introduction ? `<span class="package-intro" data-config-path="plans.${key}.introduction">${plan.introduction}</span>` : ""}
+        ${plan.packageItems ? `<span class="package-block"><strong class="package-heading">套裝內容</strong><span class="package-list">${plan.packageItems.map((item, index) => `<span data-config-path="plans.${key}.packageItems.${index}">${item}</span>`).join("")}</span></span>` : ""}
+        ${plan.packageNote ? `<span class="package-note" data-config-path="plans.${key}.packageNote">${plan.packageNote.replace(/\n/g, "<br>")}</span>` : ""}
+        ${plan.packageSummary ? `<span class="package-summary" data-config-path="plans.${key}.packageSummary">${plan.packageSummary}</span>` : ""}
       </span></span>
     </button>`;
   const entries = Object.entries(plans);
@@ -302,7 +340,7 @@ function renderSummary() {
   const result = calculate();
   document.getElementById("breakdown").innerHTML = result.lines.length === 0
     ? '<p>請先選擇拍攝方案，費用會在這裡即時整理。</p>'
-    : result.lines.map((line) => `<div class="detail-row ${line.base ? "base" : ""}"><span class="detail-name"><span>${line.name}</span>${line.summary ? `<span class="detail-summary" data-edit-key="plan.${line.planKey}.package-summary">${line.summary}</span>` : ""}</span><span class="detail-amount">${line.base ? money(line.amount) : line.amount === 0 ? "NT$0" : "+" + money(line.amount)}</span></div>`).join("");
+    : result.lines.map((line) => `<div class="detail-row ${line.base ? "base" : ""}"><span class="detail-name"><span ${line.planKey ? `class="detail-plan-name" data-config-path="plans.${line.planKey}.name"` : ""}>${line.name}</span>${line.summary ? `<span class="detail-summary" data-config-path="plans.${line.planKey}.packageSummary">${line.summary}</span>` : ""}</span><span class="detail-amount">${line.base ? money(line.amount) : line.amount === 0 ? "NT$0" : "+" + money(line.amount)}</span></div>`).join("");
   document.getElementById("totalAmount").textContent = money(result.total);
 }
 
@@ -340,6 +378,7 @@ document.addEventListener("click", (event) => {
 });
 
 initializePageMode();
+loadContentEdits();
 initializeEditMode();
 renderStaticChoices();
 render();

@@ -144,16 +144,83 @@ for (const width of widths) {
 {
   const page = await browser.newPage({ viewport: { width: 390, height: 900 } });
   await page.goto(base + "?embed=1&edit=1", { waitUntil: "networkidle" });
-  assert.equal(await page.locator("#editToolbar").isVisible(), true);
-  const target = page.locator('[data-plan="christmas"] .package-intro');
-  await target.click();
-  assert.equal(await target.evaluate((element) => document.activeElement === element), true);
-  await page.keyboard.press("Meta+A");
-  await page.keyboard.type("預覽文字修改測試");
-  assert.equal(await target.evaluate((element) => document.activeElement === element), true);
+  await page.evaluate(() => {
+    localStorage.removeItem("mokomoko-pricing-content-v1");
+    localStorage.removeItem("mokomoko-pricing-text-edits-v1");
+  });
   await page.reload({ waitUntil: "networkidle" });
-  assert.equal(await page.locator('[data-plan="christmas"] .package-intro').textContent(), "預覽文字修改測試");
+  assert.equal(await page.locator("#editToolbar").isVisible(), true);
+
+  await page.locator('[data-plan="christmas"] .radio-dot').click();
+  await page.locator('[data-species="cat"]').click();
+  assert.equal(await page.locator("#totalAmount").textContent(), "NT$7,980");
+
+  const edited = {
+    name: "其他特寵／貓｜聖誕收藏測試版",
+    description: "測試用方案說明，價格與規則保持不變。",
+    introduction: "測試用完整方案介紹。",
+    firstItem: "測試用精修寫真電子檔",
+    bonus: "活動測試加贈日系調色照片電子檔",
+    summary: "測試用共 60 張數位影像摘要"
+  };
+  const editText = async (selector, value) => {
+    const target = page.locator(selector);
+    await target.click();
+    assert.equal(await target.evaluate((element) => document.activeElement === element), true);
+    await page.keyboard.press("Meta+A");
+    await page.keyboard.type(value);
+    assert.equal(await target.textContent(), value);
+  };
+
+  await editText('[data-plan="christmas"] .choice-title strong', edited.name);
+  await editText('[data-plan="christmas"] .choice-detail', edited.description);
+  await editText('[data-plan="christmas"] .package-intro', edited.introduction);
+  await editText('[data-config-path="plans.christmas.packageItems.0"]', edited.firstItem);
+  await editText('[data-config-path="plans.christmas.packageItems.2"]', edited.bonus);
+  await editText('[data-plan="christmas"] .package-summary', edited.summary);
+
+  assert.equal(await page.locator("#breakdown .detail-plan-name").textContent(), edited.name);
+  assert.equal(await page.locator("#breakdown .detail-summary").textContent(), edited.summary);
+  assert.equal(await page.locator("#totalAmount").textContent(), "NT$7,980");
+
+  await page.locator('[data-plan="easy"] .radio-dot').click();
+  await page.locator('[data-plan="christmas"] .radio-dot').click();
+  assert.equal(await page.locator('[data-plan="christmas"] .choice-title strong').textContent(), edited.name);
+  assert.equal(await page.locator('[data-config-path="plans.christmas.packageItems.2"]').textContent(), edited.bonus);
+  assert.equal(await page.locator("#breakdown .detail-plan-name").textContent(), edited.name);
+  assert.equal(await page.locator("#breakdown .detail-summary").textContent(), edited.summary);
+
+  await page.reload({ waitUntil: "networkidle" });
+  assert.equal(await page.locator('[data-plan="christmas"] .choice-title strong').textContent(), edited.name);
+  assert.equal(await page.locator('[data-plan="christmas"] .choice-detail').textContent(), edited.description);
+  assert.equal(await page.locator('[data-plan="christmas"] .package-intro').textContent(), edited.introduction);
+  assert.equal(await page.locator('[data-config-path="plans.christmas.packageItems.0"]').textContent(), edited.firstItem);
+  assert.equal(await page.locator('[data-config-path="plans.christmas.packageItems.2"]').textContent(), edited.bonus);
+  assert.equal(await page.locator('[data-plan="christmas"] .package-summary').textContent(), edited.summary);
   assert.equal(await page.locator('[data-plan="christmas"] .package-intro').getAttribute("contenteditable"), "true");
+
+  await page.goto(base + "?embed=1", { waitUntil: "networkidle" });
+  assert.equal(await page.locator("#editToolbar").isVisible(), false);
+  assert.equal(await page.locator('[data-plan="christmas"] .choice-title strong').textContent(), edited.name);
+  assert.equal(await page.locator('[data-plan="christmas"] .package-intro').getAttribute("contenteditable"), null);
+  await page.locator('[data-plan="christmas"]').click();
+  await page.locator('[data-species="cat"]').click();
+  assert.equal(await page.locator("#breakdown .detail-plan-name").textContent(), edited.name);
+  assert.equal(await page.locator("#breakdown .detail-summary").textContent(), edited.summary);
+  assert.equal(await page.locator("#totalAmount").textContent(), "NT$7,980");
+
+  await page.goto(base + "?embed=1&edit=1", { waitUntil: "networkidle" });
+  await Promise.all([
+    page.waitForNavigation({ waitUntil: "networkidle" }),
+    page.locator("#resetEdits").click()
+  ]);
+  assert.equal(await page.locator('[data-plan="christmas"] .choice-title strong').textContent(), "其他特寵／貓｜聖誕寫真收藏");
+  assert.equal(await page.locator('[data-plan="christmas"] .choice-detail').textContent(), "已含棚拍場租（多隻毛孩加購、場租時數依拍攝對象另計算）");
+  assert.equal(await page.locator('[data-plan="christmas"] .package-intro').textContent(), "留下一整套今年的聖誕寫真，把這個冬天可愛的樣子完整留下來。");
+  assert.equal(await page.locator('[data-config-path="plans.christmas.packageItems.0"]').textContent(), "10 張精修寫真電子檔");
+  assert.equal(await page.locator('[data-config-path="plans.christmas.packageItems.2"]').textContent(), "活動期間再贈 10 張日系調色照片電子檔");
+  assert.equal(await page.locator('[data-plan="christmas"] .package-summary').textContent(), "共 60 張數位影像（無挑片流程）");
+  assert.equal(await page.evaluate(() => localStorage.getItem("mokomoko-pricing-content-v1")), null);
   await page.close();
 }
 
