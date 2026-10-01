@@ -1,1 +1,109 @@
-m�눧��bu��g��ج���u�a�iT��m��݅��(�~)^���~)^m��jF�y���y�.��������b��(~W���g�`�u�(u�^r�^�zn�^��b��Z��b�g����)�ا��_�W�y������]�z(��n�����_�W�y������]��
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="MOKOMOKO 寵物攝影費用試算器">
+  <title>MOKOMOKO 寵物攝影費用試算器</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&amp;family=Fraunces:opsz,wght@9..144,600;9..144,700&amp;display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%23e6ede1'/%3E%3Cg fill='%2363765f'%3E%3Cellipse cx='32' cy='39' rx='15' ry='12'/%3E%3Ccircle cx='15' cy='26' r='6'/%3E%3Ccircle cx='27' cy='18' r='6'/%3E%3Ccircle cx='39' cy='18' r='6'/%3E%3Ccircle cx='50' cy='27' r='6'/%3E%3C/g%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="site-header">
+      <div class="container">
+        <div class="brand-row">
+          <span class="brand-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="4" r="2"/><circle cx="18" cy="8" r="2"/><circle cx="20" cy="16" r="2"/><path d="M9 10a5 5 0 0 0-5 5v2.5A2.5 2.5 0 0 0 6.5 20c1.1 0 2-.7 2.8-1.2.8-.5 1.6-.8 2.7-.8s1.9.3 2.7.8c.8.5 1.7 1.2 2.8 1.2a2.5 2.5 0 0 0 2.5-2.5V15a5 5 0 0 0-5-5Z"/><circle cx="4" cy="8" r="2"/></svg>
+          </span>
+          <span class="brand-name">MOKOMOKO</span>
+        </div>
+        <h1>寵物攝影費用試算器</h1>
+        <p class="subtitle">慢慢選擇最適合毛孩的拍攝方式，費用會即時為你整理好。</p>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <div class="container content-grid">
+        <section class="steps" aria-label="費用試算選項">
+          <section class="step-card">
+            <div class="step-layout">
+              <span class="step-number">1</span>
+              <div class="step-body">
+                <h2>STEP 1｜選擇拍攝方案</h2>
+                <p class="helper">請先選擇一個拍攝方案。</p>
+                <p class="group-heading limited-heading">活動期間限定方案</p>
+                <div id="limitedPlans" class="choice-list" role="radiogroup" aria-label="期間限定拍攝方案"></div>
+                <p class="group-heading regular-heading">常態拍攝方案</p>
+                <div id="regularPlans" class="choice-list" role="radiogroup" aria-label="常態拍攝方案"></div>
+                <p id="planValidation" class="field-message hidden-panel" aria-live="polite"></p>
+              </div>
+            </div>
+          </section>
+
+          <section class="step-card">
+            <div class="step-layout">
+              <span class="step-number">2</span>
+              <div class="step-body">
+                <h2>STEP 2｜選擇毛孩</h2>
+                <p class="helper">請選擇毛孩種類，再調整拍攝隻數。</p>
+                <div id="speciesChoices" class="species-grid" role="radiogroup" aria-label="毛孩種類"></div>
+                <p id="speciesValidation" class="field-message hidden-panel" aria-live="polite"></p>
+                <div id="animalCounters" class="counter-list"></div>
+              </div>
+            </div>
+          </section>
+
+          <section id="environmentSection" class="step-card">
+            <div class="step-layout">
+              <span class="step-number">3</span>
+              <div class="step-body">
+                <h2>STEP 3｜拍攝環境與棚拍費</h2>
+                <p class="helper long-copy">棚拍費用依毛孩數量與預估拍攝時數計算：聖誕寫真收藏與天竺鼠聯名角色收藏皆已包含 1 小時基本棚租；若因毛孩數量需要增加拍攝時數，將依一般棚拍費 NT$1,000／小時加收。貓咪 1–2 隻皆以 2 小時計算；特寵 3 隻以 1.5 小時計算；特寵 4 隻以 2 小時計算。一般常態方案仍依一般棚拍費 NT$1,000／小時計算，實際拍攝時間與棚租仍將依毛孩數量及現場狀況，由攝影師確認。</p>
+                <div id="environmentChoices" class="choice-list environment-list" role="radiogroup" aria-label="拍攝環境"></div>
+                <p id="environmentNote" class="environment-note" aria-live="polite"></p>
+                <p id="environmentValidation" class="field-message hidden-panel" aria-live="polite"></p>
+              </div>
+            </div>
+          </section>
+
+          <section class="step-card">
+            <div class="step-layout">
+              <span class="step-number">4</span>
+              <div class="step-body">
+                <h2>STEP 4｜實體商品加購</h2>
+                <p class="helper">每項商品皆為必填欄位，數量填寫 0 即表示不加購。</p>
+                <div id="productCounters" class="counter-list"></div>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <aside aria-label="費用明細">
+          <section class="step-card summary-card">
+            <div class="step-layout">
+              <span class="step-number summary-number">5</span>
+              <div class="step-body">
+                <h2>STEP 5｜費用明細</h2>
+                <div id="breakdown" class="breakdown" aria-live="polite"></div>
+                <div id="completionNotice" class="soft-note completion-notice" aria-live="polite"></div>
+                <hr>
+                <div class="total-row">
+                  <span class="total-label">預估總額</span>
+                  <strong id="totalAmount" class="total-amount" aria-live="polite">NT$0</strong>
+                </div>
+                <p class="summary-note">此為線上費用試算。期間限定方案已包含基本棚租；一般棚拍費與最終拍攝安排，將依實際內容由 MOKOMOKO 確認後為準。</p>
+                <button id="reserveButton" type="button" class="reserve-btn" disabled aria-disabled="true">我要預約</button>
+              </div>
+            </div>
+          </section>
+        </aside>
+      </div>
+    </main>
+  </div>
+  <script src="./app.js"></script>
+</body>
+</html>
