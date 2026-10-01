@@ -3,8 +3,27 @@
 // 所有方案、品項、價格與條件規則集中於此，未來只需修改這一處。
 const pricingConfig = Object.freeze({
   plans: {
-    christmas: { name: "聖誕寫真收藏", price: 6980, type: "limited", allowed: ["cat", "exotic"], description: "適用：貓咪／特寵｜已包含基本攝影棚費用" },
-    guinea: { name: "天竺鼠聯名角色收藏", price: 7980, type: "limited", allowed: ["guinea"], description: "適用：天竺鼠｜已包含基本攝影棚費用" },
+    christmas: {
+      name: "其他特寵／貓｜聖誕寫真收藏",
+      price: 6980,
+      type: "limited",
+      allowed: ["cat", "exotic"],
+      description: "已含棚拍場租（多隻毛孩加購、場租時數依拍攝對象另計算）",
+      introduction: "留下一整套今年的聖誕寫真，把這個冬天可愛的樣子完整留下來。",
+      packageItems: ["10 張精修寫真電子檔", "40 張日系調色照片電子檔"],
+      packageSummary: "共 50 張數位影像（無挑片流程）"
+    },
+    guinea: {
+      name: "天竺鼠｜聯名角色收藏",
+      label: "天天好萌聯名",
+      price: 7980,
+      type: "limited",
+      allowed: ["guinea"],
+      description: "已含棚拍場租（多隻毛孩加購、場租時數另計算）",
+      packageItems: ["5 張精修寫真電子檔", "40 張日系調色照片電子檔", "3 款（6入）客製專屬聖誕吊飾", "3 張客製聖誕插畫電子檔", "1 張 天天好萌水晶貼紙"],
+      packageNote: "3 款專屬聖誕角色，每款製作 2 個，共 6 個聖誕角色吊飾。\n\n一套完整收藏，可以自己收藏，另一份也可以留給同樣愛牠的家人。",
+      packageSummary: "共 45 張攝影作品＋3 張客製聖誕插畫電子檔＋7 件實體收藏（無挑片流程）"
+    },
     easy: { name: "輕鬆體驗", price: 4880, type: "regular", allowed: ["dog", "cat", "exotic"], description: "包含精修照片 8 張" },
     cp: { name: "CP首選", price: 5980, type: "regular", allowed: ["dog", "cat", "exotic"], description: "包含精修照片 10 張＋調色毛片 40 張" },
     luxury: { name: "豪華套餐", price: 8080, type: "regular", allowed: ["dog", "cat", "exotic"], description: "包含精修照片 15 張、調色毛片 40 張、寵生四格照 12 條、30×30cm 無框畫 1 幅" }
@@ -13,7 +32,7 @@ const pricingConfig = Object.freeze({
     dog: { label: "狗狗", max: 3 },
     cat: { label: "貓咪", max: 2 },
     exotic: { label: "特寵", max: 4 },
-    guinea: { label: "天竺鼠", max: 4 }
+    guinea: { label: "天竺鼠", max: 3 }
   },
   products: [
     { id: "strip", name: "寵生四格照 12 條", price: 500 },
@@ -40,9 +59,13 @@ function renderStaticChoices() {
   const planCard = ([key, plan]) => `
     <button type="button" class="choice-card plan-card" data-plan="${key}" role="radio" aria-checked="false">
       <span class="choice-inner"><span class="radio-dot" aria-hidden="true"></span><span class="choice-content">
-        <span class="choice-title"><strong>${plan.name}</strong>${plan.type === "limited" ? '<span class="limited-tag">期間限定</span>' : ""}</span>
+        <span class="choice-title"><strong>${plan.name}</strong>${plan.label ? `<span class="collab-tag">${plan.label}</span>` : ""}${plan.type === "limited" ? '<span class="limited-tag">期間限定</span>' : ""}</span>
         <span class="choice-price">${money(plan.price)}</span>
         <span class="choice-detail">${plan.description}</span>
+        ${plan.introduction ? `<span class="package-intro">${plan.introduction}</span>` : ""}
+        ${plan.packageItems ? `<span class="package-block"><strong class="package-heading">套裝內容</strong><span class="package-list">${plan.packageItems.map((item) => `<span>${item}</span>`).join("")}</span></span>` : ""}
+        ${plan.packageNote ? `<span class="package-note">${plan.packageNote.replace(/\n/g, "<br>")}</span>` : ""}
+        ${plan.packageSummary ? `<span class="package-summary">${plan.packageSummary}</span>` : ""}
       </span></span>
     </button>`;
   const entries = Object.entries(plans);
@@ -173,7 +196,6 @@ function calculate() {
       const studioFee = hours * pricingConfig.studioHourlyPrice;
       lines.push({ name: `攝影棚費（預估 ${hours} 小時 × NT$1,000）`, amount: studioFee }); total += studioFee;
     }
-    if (plan.type === "regular" && state.species === "dog" && state.environment === "outdoor") lines.push({ name: "攝影棚費（狗狗戶外拍攝）", amount: 0 });
     if (plan.type === "regular" && state.environment === "outdoor" && state.species !== "dog") lines.push({ name: "攝影棚費（戶外拍攝）", amount: 0 });
     if (plan.type === "limited") {
       const hours = getStudioHours();
@@ -213,7 +235,10 @@ function renderValidation() {
   const complete = hasCompletedRequiredFields();
   notice.textContent = complete ? "必填欄位已完成，您可查看完整預估費用。" : !state.plan ? "請先完成必填欄位：拍攝方案。" : !state.species ? "請完成必填欄位：毛孩種類與數量。" : needsEnvironment ? "請完成必填欄位：拍攝環境。" : "請完成必填欄位後，即可啟用「我要預約」。";
   const reserveButton = document.getElementById("reserveButton");
-  reserveButton.disabled = !complete; reserveButton.setAttribute("aria-disabled", String(!complete));
+  reserveButton.classList.toggle("is-disabled", !complete);
+  reserveButton.setAttribute("aria-disabled", String(!complete));
+  if (complete) reserveButton.setAttribute("href", reserveButton.dataset.href);
+  else reserveButton.removeAttribute("href");
 }
 
 function render() {

@@ -35,7 +35,7 @@
               <div class="step-body">
                 <h2>STEP 1｜選擇拍攝方案</h2>
                 <p class="helper">請先選擇一個拍攝方案。</p>
-                <p class="group-heading limited-heading">活動期間限定方案</p>
+                <p class="group-heading limited-heading">室內棚拍活動限定方案｜10/31 前預約</p>
                 <div id="limitedPlans" class="choice-list" role="radiogroup" aria-label="期間限定拍攝方案"></div>
                 <p class="group-heading regular-heading">常態拍攝方案</p>
                 <div id="regularPlans" class="choice-list" role="radiogroup" aria-label="常態拍攝方案"></div>
@@ -62,7 +62,15 @@
               <span class="step-number">3</span>
               <div class="step-body">
                 <h2>STEP 3｜拍攝環境與棚拍費</h2>
-                <p class="helper long-copy">棚拍費用依毛孩數量與預估拍攝時數計算：聖誕寫真收藏與天竺鼠聯名角色收藏皆已包含 1 小時基本棚租；若因毛孩數量需要增加拍攝時數，將依一般棚拍費 NT$1,000／小時加收。貓咪 1–2 隻皆以 2 小時計算；特寵 3 隻以 1.5 小時計算；特寵 4 隻以 2 小時計算。一般常態方案仍依一般棚拍費 NT$1,000／小時計算，實際拍攝時間與棚租仍將依毛孩數量及現場狀況，由攝影師確認。</p>
+                <ul class="rule-list">
+                  <li>棚拍費用依毛孩數量與預估拍攝時數計算。</li>
+                  <li>聖誕寫真收藏與天竺鼠聯名角色收藏皆已包含 1 小時基本棚租。</li>
+                  <li>若因毛孩數量需要增加拍攝時數，將依一般棚拍費 NT$1,000／小時加收。</li>
+                  <li>貓咪 1–2 隻皆以 2 小時計算。</li>
+                  <li>特寵 3 隻以 1.5 小時計算；特寵 4 隻以 2 小時計算。</li>
+                  <li>一般常態方案仍依一般棚拍費 NT$1,000／小時計算。</li>
+                  <li>實際拍攝時間與棚租仍將依毛孩數量及現場狀況，由攝影師確認。</li>
+                </ul>
                 <div id="environmentChoices" class="choice-list environment-list" role="radiogroup" aria-label="拍攝環境"></div>
                 <p id="environmentNote" class="environment-note" aria-live="polite"></p>
                 <p id="environmentValidation" class="field-message hidden-panel" aria-live="polite"></p>
@@ -96,7 +104,13 @@
                   <strong id="totalAmount" class="total-amount" aria-live="polite">NT$0</strong>
                 </div>
                 <p class="summary-note">此為線上費用試算。期間限定方案已包含基本棚租；一般棚拍費與最終拍攝安排，將依實際內容由 MOKOMOKO 確認後為準。</p>
-                <button id="reserveButton" type="button" class="reserve-btn" disabled aria-disabled="true">我要預約</button>
+                <div class="cta-actions">
+                  <a id="reserveButton" class="cta-link reserve-btn is-disabled" data-href="https://mkmkpet.my.canva.site/" target="_blank" rel="noopener noreferrer" aria-disabled="true">我要預約</a>
+                  <a class="cta-link instagram-btn" href="https://www.instagram.com/mkmkpet/" target="_blank" rel="noopener noreferrer">
+                    <svg class="instagram-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+                    <span>mkmkpet</span>
+                  </a>
+                </div>
               </div>
             </div>
           </section>

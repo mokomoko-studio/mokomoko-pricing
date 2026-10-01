@@ -49,7 +49,10 @@ for (const width of widths) {
   assert.equal(await page.locator("#totalAmount").textContent(), "NT$6,530");
   await page.locator('[data-product="strip"][data-product-delta="-1"]').click();
   assert.equal(await page.locator("#totalAmount").textContent(), "NT$6,030");
-  assert.equal(await page.locator("#reserveButton").isEnabled(), true);
+  assert.equal(await page.locator("#reserveButton").getAttribute("href"), "https://mkmkpet.my.canva.site/");
+  assert.equal(await page.locator(".instagram-btn").getAttribute("href"), "https://www.instagram.com/mkmkpet/");
+  assert.equal(await page.locator("#reserveButton").getAttribute("rel"), "noopener noreferrer");
+  assert.equal(await page.locator(".instagram-btn").getAttribute("rel"), "noopener noreferrer");
   assert.deepEqual(errors, []);
   await page.close();
 }
@@ -61,6 +64,39 @@ for (const width of widths) {
   await page.locator('[data-count-delta="1"]').click();
   assert.equal(await page.locator("#totalAmount").textContent(), "NT$8,480");
   assert.deepEqual(errors, []);
+  await page.close();
+}
+
+{
+  const { page, errors } = await open(390);
+  await page.locator('[data-plan="guinea"]').click();
+  assert.equal(await page.locator("#totalAmount").textContent(), "NT$7,980");
+  await page.locator('[data-count-delta="1"]').click();
+  assert.equal(await page.locator("#totalAmount").textContent(), "NT$8,480");
+  await page.locator('[data-count-delta="1"]').click();
+  assert.equal(await page.locator("#totalAmount").textContent(), "NT$9,480");
+  assert.equal(await page.locator('[data-count-delta="1"]').isDisabled(), true);
+  assert.match(await page.locator('[data-plan="guinea"]').innerText(), /天天好萌聯名/);
+  assert.match(await page.locator('[data-plan="guinea"]').innerText(), /7 件實體收藏/);
+  assert.deepEqual(errors, []);
+  await page.close();
+}
+
+{
+  const { page, errors } = await open(390);
+  await page.locator('[data-plan="easy"]').click();
+  await page.locator('[data-species="dog"]').click();
+  assert.equal(await page.locator("#totalAmount").textContent(), "NT$4,880");
+  assert.equal((await page.locator("#breakdown").innerText()).includes("攝影棚費"), false);
+  assert.deepEqual(errors, []);
+  await page.close();
+}
+
+{
+  const { page } = await open(375);
+  assert.equal(await page.locator(".limited-heading").textContent(), "室內棚拍活動限定方案｜10/31 前預約");
+  assert.equal(await page.locator(".rule-list li").count(), 7);
+  assert.match(await page.locator('[data-plan="christmas"]').innerText(), /共 50 張數位影像（無挑片流程）/);
   await page.close();
 }
 
