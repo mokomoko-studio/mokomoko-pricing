@@ -124,5 +124,25 @@ for (const width of widths) {
   await page.close();
 }
 
+{
+  const page = await browser.newPage({ viewport: { width: 390, height: 900 } });
+  await page.goto(base + "?embed=1&edit=1", { waitUntil: "networkidle" });
+  assert.equal(await page.locator("#editToolbar").isVisible(), true);
+  const target = page.locator('[data-plan="christmas"] .package-intro');
+  await target.fill("預覽文字修改測試");
+  await page.reload({ waitUntil: "networkidle" });
+  assert.equal(await page.locator('[data-plan="christmas"] .package-intro').textContent(), "預覽文字修改測試");
+  assert.equal(await page.locator('[data-plan="christmas"] .package-intro').getAttribute("contenteditable"), "true");
+  await page.close();
+}
+
+{
+  const page = await browser.newPage({ viewport: { width: 390, height: 900 } });
+  await page.goto(base + "?embed=1", { waitUntil: "networkidle" });
+  assert.equal(await page.locator("#editToolbar").isVisible(), false);
+  assert.equal(await page.locator('[data-plan="christmas"] .package-intro').getAttribute("contenteditable"), null);
+  await page.close();
+}
+
 await browser.close();
 console.log(`PASS: ${widths.join(", ")}px mobile, desktop, pricing interactions, and iframe embed`);

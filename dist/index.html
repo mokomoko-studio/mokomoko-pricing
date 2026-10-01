@@ -12,6 +12,17 @@
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
+  <div id="editToolbar" class="edit-toolbar" hidden>
+    <div class="edit-toolbar-copy">
+      <strong>文字編輯模式</strong>
+      <span id="editStatus">直接點選文字修改；內容只儲存在這個瀏覽器。</span>
+    </div>
+    <div class="edit-toolbar-actions">
+      <button id="exportEdits" type="button">下載文字設定</button>
+      <button id="resetEdits" type="button">重設文字</button>
+      <a id="exitEditMode" href="./">離開編輯</a>
+    </div>
+  </div>
   <div class="page-shell">
     <header class="site-header">
       <div class="container">

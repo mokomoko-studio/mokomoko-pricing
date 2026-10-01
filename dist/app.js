@@ -48,11 +48,93 @@ const state = { plan: null, species: null, count: 1, environment: null, products
 const { plans, species: speciesInfo, products } = pricingConfig;
 const money = (amount) => "NT$" + amount.toLocaleString("zh-TW");
 const currentPlan = () => state.plan ? plans[state.plan] : null;
+const editMode = new URLSearchParams(location.search).get("edit") === "1";
+const EDIT_STORAGE_KEY = "mokomoko-pricing-text-edits-v1";
+let textEdits = {};
 
 function initializePageMode() {
   const params = new URLSearchParams(location.search);
   const isEmbed = params.get("embed") === "1" || params.get("mode") === "embed";
   document.body.classList.toggle("embed-mode", isEmbed);
+}
+
+function editableKey(element) {
+  const plan = element.closest("[data-plan]");
+  if (plan) {
+    const packageItem = element.closest(".package-list > span");
+    const itemIndex = packageItem ? [...packageItem.parentElement.children].indexOf(packageItem) : -1;
+    const role = packageItem ? `package-item-${itemIndex}` : element.className || element.tagName.toLowerCase();
+    return `plan.${plan.dataset.plan}.${String(role).trim().replace(/\s+/g, ".")}`;
+  }
+  const parts = [];
+  let node = element;
+  while (node && node !== document.body) {
+    const parent = node.parentElement;
+    if (!parent) break;
+    const sameTag = [...parent.children].filter((child) => child.tagName === node.tagName);
+    parts.unshift(`${node.tagName.toLowerCase()}:${sameTag.indexOf(node)}`);
+    if (node.id) { parts.unshift(`#${node.id}`); break; }
+    node = parent;
+  }
+  return `page.${parts.join("/")}`;
+}
+
+function loadTextEdits() {
+  try { textEdits = JSON.parse(localStorage.getItem(EDIT_STORAGE_KEY) || "{}"); }
+  catch { textEdits = {}; }
+}
+
+function updateEditStatus(message = "變更已儲存在這個瀏覽器。") {
+  const status = document.getElementById("editStatus");
+  if (status) status.textContent = message;
+}
+
+function refreshEditableText() {
+  if (!editMode) return;
+  const selector = [
+    ".brand-name", "h1", "h2", ".subtitle", ".group-heading", ".helper", ".rule-list li",
+    ".choice-title strong", ".choice-detail", ".package-intro", ".package-heading", ".package-list > span",
+    ".package-note", ".package-summary", ".environment-note", ".environment-list strong", ".environment-list p",
+    ".counter-copy strong", ".counter-copy p", ".summary-note", ".total-label", ".completion-notice"
+  ].join(",");
+  document.querySelectorAll(selector).forEach((element) => {
+    const key = editableKey(element);
+    element.dataset.editKey = key;
+    if (Object.prototype.hasOwnProperty.call(textEdits, key)) element.textContent = textEdits[key];
+    element.contentEditable = "true";
+    element.spellcheck = false;
+  });
+}
+
+function initializeEditMode() {
+  if (!editMode) return;
+  loadTextEdits();
+  document.body.classList.add("edit-mode");
+  document.getElementById("editToolbar").hidden = false;
+  const exitUrl = new URL(location.href);
+  exitUrl.searchParams.delete("edit");
+  document.getElementById("exitEditMode").href = exitUrl.href;
+  document.addEventListener("input", (event) => {
+    const element = event.target.closest("[data-edit-key]");
+    if (!element) return;
+    textEdits[element.dataset.editKey] = element.innerText.trim();
+    localStorage.setItem(EDIT_STORAGE_KEY, JSON.stringify(textEdits));
+    updateEditStatus();
+  });
+  document.getElementById("exportEdits").addEventListener("click", () => {
+    const blob = new Blob([JSON.stringify(textEdits, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "mokomoko-text-edits.json";
+    link.click();
+    URL.revokeObjectURL(url);
+    updateEditStatus("文字設定已下載。");
+  });
+  document.getElementById("resetEdits").addEventListener("click", () => {
+    localStorage.removeItem(EDIT_STORAGE_KEY);
+    location.reload();
+  });
 }
 
 function renderStaticChoices() {
@@ -245,7 +327,7 @@ function render() {
   const plan = currentPlan();
   document.querySelectorAll(".plan-card").forEach((el) => { const selected = el.dataset.plan === state.plan; el.classList.toggle("is-selected", selected); el.setAttribute("aria-checked", String(selected)); });
   document.querySelectorAll(".species-card").forEach((el) => { const key = el.dataset.species; const allowed = !!plan && plan.allowed.includes(key); const selected = key === state.species; el.classList.toggle("hidden-panel", !allowed); el.classList.toggle("is-selected", selected); el.setAttribute("aria-checked", String(selected)); });
-  renderAnimalCounter(); renderEnvironment(); renderProducts(); renderSummary(); renderValidation();
+  renderAnimalCounter(); renderEnvironment(); renderProducts(); renderSummary(); renderValidation(); refreshEditableText();
 }
 
 document.addEventListener("click", (event) => {
@@ -257,6 +339,7 @@ document.addEventListener("click", (event) => {
 });
 
 initializePageMode();
+initializeEditMode();
 renderStaticChoices();
 render();
 
