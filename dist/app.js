@@ -10,8 +10,8 @@ const pricingConfig = Object.freeze({
       allowed: ["cat", "exotic"],
       description: "已含棚拍場租（多隻毛孩加購、場租時數依拍攝對象另計算）",
       introduction: "留下一整套今年的聖誕寫真，把這個冬天可愛的樣子完整留下來。",
-      packageItems: ["10 張精修寫真電子檔", "40 張日系調色照片電子檔"],
-      packageSummary: "共 50 張數位影像（無挑片流程）"
+      packageItems: ["10 張精修寫真電子檔", "40 張日系調色照片電子檔", "活動期間再贈 10 張日系調色照片電子檔"],
+      packageSummary: "共 60 張數位影像（無挑片流程）"
     },
     guinea: {
       name: "天竺鼠｜聯名角色收藏",
@@ -59,6 +59,7 @@ function initializePageMode() {
 }
 
 function editableKey(element) {
+  if (element.dataset.editKey) return element.dataset.editKey;
   const plan = element.closest("[data-plan]");
   if (plan) {
     const packageItem = element.closest(".package-list > span");
@@ -95,7 +96,7 @@ function refreshEditableText() {
     ".brand-name", "h1", "h2", ".subtitle", ".group-heading", ".helper", ".rule-list li",
     ".choice-title strong", ".choice-detail", ".package-intro", ".package-heading", ".package-list > span",
     ".package-note", ".package-summary", ".environment-note", ".environment-list strong", ".environment-list p",
-    ".counter-copy strong", ".counter-copy p", ".summary-note", ".total-label", ".completion-notice"
+    ".counter-copy strong", ".counter-copy p", ".detail-summary", ".summary-note", ".total-label", ".completion-notice"
   ].join(",");
   document.querySelectorAll(selector).forEach((element) => {
     const key = editableKey(element);
@@ -119,6 +120,9 @@ function initializeEditMode() {
     if (!element) return;
     textEdits[element.dataset.editKey] = element.innerText.trim();
     localStorage.setItem(EDIT_STORAGE_KEY, JSON.stringify(textEdits));
+    document.querySelectorAll("[data-edit-key]").forEach((other) => {
+      if (other !== element && other.dataset.editKey === element.dataset.editKey) other.textContent = textEdits[element.dataset.editKey];
+    });
     updateEditStatus();
   });
   document.getElementById("exportEdits").addEventListener("click", () => {
@@ -267,7 +271,7 @@ function calculate() {
   const lines = [];
   let total = 0;
   const plan = currentPlan();
-  if (plan) { lines.push({ name: plan.name, amount: plan.price, base: true }); total += plan.price; }
+  if (plan) { lines.push({ name: plan.name, planKey: state.plan, summary: plan.packageSummary || "", amount: plan.price, base: true }); total += plan.price; }
   if (plan && state.species && state.count > 1) {
     const petFee = (state.count - 1) * pricingConfig.extraPetPrice;
     lines.push({ name: `毛孩加價（第 2–${state.count} 隻）`, amount: petFee }); total += petFee;
@@ -298,7 +302,7 @@ function renderSummary() {
   const result = calculate();
   document.getElementById("breakdown").innerHTML = result.lines.length === 0
     ? '<p>請先選擇拍攝方案，費用會在這裡即時整理。</p>'
-    : result.lines.map((line) => `<div class="detail-row ${line.base ? "base" : ""}"><span class="detail-name">${line.name}</span><span class="detail-amount">${line.base ? money(line.amount) : line.amount === 0 ? "NT$0" : "+" + money(line.amount)}</span></div>`).join("");
+    : result.lines.map((line) => `<div class="detail-row ${line.base ? "base" : ""}"><span class="detail-name"><span>${line.name}</span>${line.summary ? `<span class="detail-summary" data-edit-key="plan.${line.planKey}.package-summary">${line.summary}</span>` : ""}</span><span class="detail-amount">${line.base ? money(line.amount) : line.amount === 0 ? "NT$0" : "+" + money(line.amount)}</span></div>`).join("");
   document.getElementById("totalAmount").textContent = money(result.total);
 }
 
@@ -316,17 +320,13 @@ function renderValidation() {
   const notice = document.getElementById("completionNotice");
   const complete = hasCompletedRequiredFields();
   notice.textContent = complete ? "必填欄位已完成，您可查看完整預估費用。" : !state.plan ? "請先完成必填欄位：拍攝方案。" : !state.species ? "請完成必填欄位：毛孩種類與數量。" : needsEnvironment ? "請完成必填欄位：拍攝環境。" : "請完成必填欄位後，即可啟用「我要預約」。";
-  const reserveButton = document.getElementById("reserveButton");
-  reserveButton.classList.toggle("is-disabled", !complete);
-  reserveButton.setAttribute("aria-disabled", String(!complete));
-  if (complete) reserveButton.setAttribute("href", reserveButton.dataset.href);
-  else reserveButton.removeAttribute("href");
 }
 
 function render() {
   const plan = currentPlan();
   document.querySelectorAll(".plan-card").forEach((el) => { const selected = el.dataset.plan === state.plan; el.classList.toggle("is-selected", selected); el.setAttribute("aria-checked", String(selected)); });
   document.querySelectorAll(".species-card").forEach((el) => { const key = el.dataset.species; const allowed = !!plan && plan.allowed.includes(key); const selected = key === state.species; el.classList.toggle("hidden-panel", !allowed); el.classList.toggle("is-selected", selected); el.setAttribute("aria-checked", String(selected)); });
+  document.getElementById("speciesChoices").classList.toggle("hidden-panel", !plan);
   renderAnimalCounter(); renderEnvironment(); renderProducts(); renderSummary(); renderValidation(); refreshEditableText();
 }
 

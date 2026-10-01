@@ -34,12 +34,16 @@ for (const width of widths) {
   assert.equal(overflow.body, 0, `${width}px body horizontal overflow: ${JSON.stringify(overflow)}`);
   assert.deepEqual(overflow.offenders, [], `${width}px element overflow: ${JSON.stringify(overflow.offenders)}`);
   assert.deepEqual(errors, [], `${width}px console errors: ${errors.join("\n")}`);
+  assert.equal(await page.locator("#reserveButton").getAttribute("href"), "https://mkmkpet.my.canva.site/");
+  assert.equal(await page.locator("#reserveButton").textContent(), "我要預約（回到官方網站）");
+  assert.equal(await page.locator("#speciesChoices").isVisible(), false);
   await page.close();
 }
 
 {
   const { page, errors } = await open(390);
   await page.locator('[data-plan="easy"]').click();
+  assert.equal(await page.locator("#speciesChoices").isVisible(), true);
   await page.locator('[data-species="dog"]').click();
   assert.equal(await page.locator("#totalAmount").textContent(), "NT$4,880");
   await page.locator('[data-count-delta="1"]').click();
@@ -52,6 +56,11 @@ for (const width of widths) {
   assert.equal(await page.locator("#reserveButton").getAttribute("href"), "https://mkmkpet.my.canva.site/");
   assert.equal(await page.locator(".instagram-btn").getAttribute("href"), "https://www.instagram.com/mkmkpet/");
   assert.equal(await page.locator("#reserveButton").getAttribute("rel"), "noopener noreferrer");
+  const speciesAlignment = await page.locator('[data-species="dog"]').evaluate((element) => {
+    const style = getComputedStyle(element);
+    return { display: style.display, alignItems: style.alignItems, justifyContent: style.justifyContent, textAlign: style.textAlign };
+  });
+  assert.deepEqual(speciesAlignment, { display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center" });
   assert.equal(await page.locator(".instagram-btn").getAttribute("rel"), "noopener noreferrer");
   assert.deepEqual(errors, []);
   await page.close();
@@ -96,7 +105,15 @@ for (const width of widths) {
   const { page } = await open(375);
   assert.equal(await page.locator(".limited-heading").textContent(), "室內棚拍活動限定方案｜10/31 前預約");
   assert.equal(await page.locator(".rule-list li").count(), 7);
-  assert.match(await page.locator('[data-plan="christmas"]').innerText(), /共 50 張數位影像（無挑片流程）/);
+  const christmasCard = await page.locator('[data-plan="christmas"]').innerText();
+  assert.match(christmasCard, /活動期間再贈 10 張日系調色照片電子檔/);
+  assert.match(christmasCard, /共 60 張數位影像（無挑片流程）/);
+  assert.equal(christmasCard.includes("共 50 張數位影像"), false);
+  await page.locator('[data-plan="christmas"]').click();
+  await page.locator('[data-species="cat"]').click();
+  const breakdown = await page.locator("#breakdown").innerText();
+  assert.match(breakdown, /共 60 張數位影像（無挑片流程）/);
+  assert.equal(breakdown.includes("共 50 張數位影像"), false);
   await page.close();
 }
 
