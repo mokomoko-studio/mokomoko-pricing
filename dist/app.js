@@ -10,7 +10,7 @@ const pricingConfig = Object.freeze({
       allowed: ["cat", "exotic"],
       description: "已含基本棚拍場租（多隻毛孩加購、場租時數依拍攝對象另計算）",
       introduction: "",
-      packageItems: ["10 張精修照片電子檔", "40 張日系調色照片電子檔", "再贈 10 張日系調色照片電子檔"],
+      packageItems: ["10 張精修照片", "40 張調色毛片", "再贈 10 張調色毛片"],
       packageSummary: "共 60 張攝影作品"
     },
     guinea: {
@@ -20,7 +20,7 @@ const pricingConfig = Object.freeze({
       type: "limited",
       allowed: ["guinea"],
       description: "已含棚拍場租（多隻毛孩加購、場租時數另計算）",
-      packageItems: ["5 張精修寫真電子檔", "40 張日系調色照片電子檔", "3 張客製聖誕插畫電子檔", "3 款(6入) 客製專屬聖誕吊飾", "1 張 天天好萌水晶貼紙"],
+      packageItems: ["5 張精修照片", "40 張調色毛片", "3 張客製聖誕插畫電子檔", "3 款(6入) 客製專屬聖誕吊飾", "1 張 天天好萌水晶貼紙"],
       packageNote: "✧ 3 款天天好萌客製聖誕角色，每款製作 2 個，共 6 個聖誕吊飾！",
       packageSummary: "共 45 張攝影作品＋3 張客製聖誕插畫電子檔＋7 件實體收藏"
     },
@@ -49,7 +49,7 @@ const { plans, species: speciesInfo, products } = pricingConfig;
 const money = (amount) => "NT$" + amount.toLocaleString("zh-TW");
 const currentPlan = () => state.plan ? plans[state.plan] : null;
 const editMode = new URLSearchParams(location.search).get("edit") === "1";
-const CONTENT_STORAGE_KEY = "mokomoko-pricing-content-v1";
+const CONTENT_STORAGE_KEY = "mokomoko-pricing-content-v2";
 const LEGACY_STORAGE_KEY = "mokomoko-pricing-text-edits-v1";
 let contentEdits = { config: {}, page: {} };
 
